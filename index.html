@@ -235,54 +235,32 @@ function fmt12(hhmm){
 }
 
 async function loadData(){
-  let timetableExists = true;
-  let holidaysExist = true;
   try{
-    const res = await window.storage.get(KEY_TIMETABLE, false);
-    if(res && res.value){
-      timetable = JSON.parse(res.value);
-    } else {
-      timetable = JSON.parse(JSON.stringify(defaultTimetable));
-      timetableExists = false;
-    }
+    const raw = localStorage.getItem(KEY_TIMETABLE);
+    timetable = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultTimetable));
+    if(!raw) localStorage.setItem(KEY_TIMETABLE, JSON.stringify(timetable));
   }catch(e){
     timetable = JSON.parse(JSON.stringify(defaultTimetable));
-    timetableExists = false;
   }
   try{
-    const res2 = await window.storage.get(KEY_HOLIDAYS, false);
-    if(res2 && res2.value){
-      holidays = JSON.parse(res2.value);
-    } else {
-      holidays = JSON.parse(JSON.stringify(defaultHolidays));
-      holidaysExist = false;
-    }
+    const raw2 = localStorage.getItem(KEY_HOLIDAYS);
+    holidays = raw2 ? JSON.parse(raw2) : JSON.parse(JSON.stringify(defaultHolidays));
+    if(!raw2) localStorage.setItem(KEY_HOLIDAYS, JSON.stringify(holidays));
   }catch(e){
     holidays = JSON.parse(JSON.stringify(defaultHolidays));
-    holidaysExist = false;
   }
-  // only write defaults back on first run, never overwrite data that already loaded fine
-  if(!timetableExists) await saveTimetable();
-  if(!holidaysExist) await saveHolidays();
   renderWeekGrid();
   renderHolidays();
   updateClock();
 }
 
 async function saveTimetable(){
-  try{ await window.storage.set(KEY_TIMETABLE, JSON.stringify(timetable), false); }
+  try{ localStorage.setItem(KEY_TIMETABLE, JSON.stringify(timetable)); }
   catch(e){ setStatus("Couldn't save timetable."); }
 }
 async function saveHolidays(){
-  try{
-    await window.storage.set(KEY_HOLIDAYS, JSON.stringify(holidays), false);
-    const check = await window.storage.get(KEY_HOLIDAYS, false);
-    if(!check || check.value !== JSON.stringify(holidays)){
-      setStatus("Save didn't verify — try again.");
-    }
-  }catch(e){
-    setStatus("Couldn't save holiday. Try again.");
-  }
+  try{ localStorage.setItem(KEY_HOLIDAYS, JSON.stringify(holidays)); }
+  catch(e){ setStatus("Couldn't save holiday. Try again."); }
 }
 function setStatus(msg){
   const el = document.getElementById("statusMsg");
